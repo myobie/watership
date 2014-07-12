@@ -11,8 +11,9 @@ module Watership
   ]
 
   class << self
-    def environment=(env)
+    def environment=(env, notifier)
       @env = env
+      @notifier = notifier
     end
 
     def config=(uri)
@@ -55,7 +56,11 @@ module Watership
     end
 
     def notify(exception)
-      Airbrake.notify_or_ignore(exception) if defined?(Airbrake) && @env == 'production'
+      if notifier = :bugsnag
+        Bugsnag.notify(exception) if defined?(Bugsnag) && @env == 'production'
+      else
+        Airbrake.notify_or_ignore(exception) if defined?(Airbrake) && @env == 'production'
+      end
     end
 
     def logger=(logger)
