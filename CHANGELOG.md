@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.5 - 2014-07-12
+* Adding general support for Bugsnag
+
 ## 0.5.0 - 2014-07-10
 * Add support for running multiple threads in a single consumer.
 

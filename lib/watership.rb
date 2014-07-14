@@ -55,6 +55,7 @@ module Watership
     end
 
     def notify(exception)
+      Bugsnag.notify(exception) if defined?(Bugsnag) && @env == 'production'
       Airbrake.notify_or_ignore(exception) if defined?(Airbrake) && @env == 'production'
     end
 
