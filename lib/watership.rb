@@ -38,7 +38,8 @@ module Watership
     end
 
     def reconnect
-      $channel = nil
+      Thread.current[:buuny_channel] = nil
+      $bunny_connection = nil
       channel
       true
     end
