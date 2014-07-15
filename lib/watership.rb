@@ -44,14 +44,14 @@ module Watership
     end
 
     def channel
-      $channel ||= connection.create_channel
+      Thread.current[:bunny_channel] ||= connection.create_channel
     rescue *CONNECTION_EXCEPTIONS => exception
       notify(exception)
-      $channel = nil
+      Thread.current[:bunny_channel] = nil
     end
 
     def connection
-      Bunny.new(@config).tap { |bunny| bunny.start }
+      $bunny_connection ||= Bunny.new(@config).tap { |bunny| bunny.start }
     end
 
     def notify(exception)
