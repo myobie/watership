@@ -8,19 +8,21 @@ module Watership
       @consumer = consumer
       @url = url
       @prefetch = channel_options.delete(:prefetch) || Integer(ENV.fetch("RABBIT_CONSUMER_PREFETCH", 200))
+      @concurrency = channel_options.delete(:concurrency) || 1
       @channel_opts = {durable: true}.merge(channel_options)
       @queue_opts = {block: false, ack: true}.merge(queue_options)
     end
 
-    def consume(concurrency = 1)
+    def consume(donotuse = :donotuse)
+      logger.error("Don't provide an argument to Consumer#consume") unless donotuse == :donotuse
+
       Thread.abort_on_exception = true
-      concurrency.times do
+      @concurrency.times do
         queue.subscribe(@queue_opts) do |delivery_info, properties, payload|
-          success = true
-          data = JSON.parse(payload)
           begin
+            data = JSON.parse(payload)
             @consumer.call(data)
-            ack_message(delivery_info.delivery_tag)
+            success = true
           rescue StandardError => exception
             logger.error "Error thrown in subscribe block"
             logger.error exception.message
@@ -28,19 +30,21 @@ module Watership
 
             retries = data["retries"] || 0
 
-            if retries.to_i < 3
-              Watership.enqueue(name: @consumer.class::QUEUE, payload: data.merge({retries: retries+1}))
-            end
-
             Airbrake.notify(exception) if defined?(Airbrake)
             Bugsnag.notify(exception, data: {payload: data, retries: retries}) if defined?(Bugsnag)
+
+            if retries.to_i < 3
+              Watership.enqueue(name: @consumer.class::QUEUE, payload: data.merge({retries: retries+1}))
+              success = true
+            end
           rescue Interrupt => exception
-            success = false
             logger.error "Interrupt in subscribe block"
             logger.warn "Stopped gracefully."
             throw(:terminate)
           ensure
-            unless success
+            if success
+              ack_message(delivery_info.delivery_tag)
+            else
               reject_message(delivery_info.delivery_tag)
             end
           end
@@ -80,7 +84,7 @@ module Watership
 
     def channel
       @channel ||= begin
-        c = connection.create_channel
+        c = connection.create_channel(nil, @concurrency)
         c.prefetch(@prefetch)
         c
       end
