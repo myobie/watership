@@ -53,6 +53,15 @@ module Watership
       Thread.current[:bunny_channel] ||= connection.create_channel
     rescue *CONNECTION_EXCEPTIONS => exception
       notify(exception)
+
+      if Thread.current[:bunny_channel].respond_to?(:close)
+        begin
+          Thread.current[:bunny_channel].close
+        rescue Bunny::ChannelError
+          # the channel is already closed
+        end
+      end
+
       Thread.current[:bunny_channel] = nil
     end
 
