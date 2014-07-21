@@ -19,7 +19,11 @@ module Watership
       @config = uri
     end
 
-    def enqueue(options = {})
+    def enqueue!(options = {})
+      enqueue(options, true)
+    end
+
+    def enqueue(options = {}, reraise = false)
       options  = options.dup
       message  = options.delete(:message)
       name     = options.delete(:name)
@@ -31,6 +35,7 @@ module Watership
       fallback.call if fallback
       notify(exception)
       logger.error(exception.class.name)
+      raise exception if reraise
     end
 
     def connect_with_queue(name, options = {})
