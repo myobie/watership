@@ -3,6 +3,11 @@
 ## 0.7.0 - 2014-07-21
 * Adding bang methods to re-raise recused errors
 
+## 0.6.0 - 2014-07-18
+* Acknoledges failed messages after they are re-enqueued
+* Added thread safety
+* Added bugsnug support
+
 ## 0.5.5 - 2014-07-12
 * Adding general support for Bugsnag
 
