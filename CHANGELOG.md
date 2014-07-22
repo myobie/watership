@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.1 - 2014-07-22
+* Do not just nil out the channel during an exception, try to close it
+
 ## 0.7.0 - 2014-07-21
 * Adding bang methods to re-raise recused errors
 
